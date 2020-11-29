@@ -10,6 +10,9 @@
         }
     ],
     "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": { "VENDOR\\": "src/" }
+    },
     "require": {
         "daiglej/less-framework": "9999999-dev"
     }
