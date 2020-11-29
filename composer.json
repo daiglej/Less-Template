@@ -1,6 +1,6 @@
 {
     "name": "daiglej/less-template",
-    "description": "Modular Docker Framework",
+    "description": "Project Template for the Less framework",
     "type": "project",
     "license": "Unlicense",
     "authors": [
