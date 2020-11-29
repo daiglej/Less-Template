@@ -1,0 +1,16 @@
+{
+    "name": "daiglej/less-template",
+    "description": "Modular Docker Framework",
+    "type": "project",
+    "license": "Unlicense",
+    "authors": [
+        {
+            "name": "Jonathan Daigle",
+            "email": "jonathan.daigle@noreply.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "daiglej/less-framework": "9999999-dev"
+    }
+}
