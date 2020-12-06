@@ -20,13 +20,16 @@ FROM php:8.0-fpm-alpine3.12
 RUN mkdir /app
 WORKDIR /app
 
+# Install extensions
 RUN set -e; \
+    cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini; \
     docker-php-ext-enable opcache; # Is this necessary?
 
-# Install dev packages in a layer of there own, to optimix=za cache hist with switching environments.
+# Install development extensions in a layer of there own, to optimize cache hist with switching environments.
 ARG dev=0
 RUN set -e; \
     if [ "$dev" == "1" ]; then \
+        cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini; \
         apk add --no-cache --virtual .dev-deps \
             $PHPIZE_DEPS; \
         pecl install xdebug oap-beta; \
@@ -34,6 +37,7 @@ RUN set -e; \
         apk del .dev-deps;\
     fi;
 
+# Ensure platform meats our packages requirements
 COPY --from=composer:2.0 /usr/bin/composer /usr/bin
 COPY composer.* ./
 RUN set -e; \
@@ -45,6 +49,6 @@ RUN set -e; \
     fi; \
     rm composer.*;
 
-
+# Add source files
 COPY --from=source app/ /app
 

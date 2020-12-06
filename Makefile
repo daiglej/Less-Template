@@ -9,7 +9,8 @@ down:
 	docker-compose ps --all;
 
 build: .env
-	docker-compose build --pull --no-rm --parallel;
+	docker-compose build --pull --no-rm --parallel; \
+	docker-compose images;
 
 vendor: composer.json composer.lock
 	docker run -v $(PWD):/app composer:2.0 install && \
