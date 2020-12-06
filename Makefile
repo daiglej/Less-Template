@@ -1,7 +1,7 @@
 .PHONY: up down build .up shell
 
 up: .env vendor build
-	docker-compose up --build --detach --force-recreate --remove-orphans && \
+	docker-compose up --detach --force-recreate --remove-orphans && \
 	docker-compose ps --all;
 
 down:
