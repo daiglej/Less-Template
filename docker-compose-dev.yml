@@ -6,4 +6,4 @@ services:
       args:
         - dev=1
     volumes:
-      - ./:/app:cached
+      - ./php:/app:cached

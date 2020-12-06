@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+
+
+$DependencyInjectionContainer = require __DIR__ . '/src/bootstrap.php';
+
+
+echo 'FIXME: Not implemented';
+exit(1);
