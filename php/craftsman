@@ -1,9 +1,12 @@
 #!/usr/bin/env php
 <?php
 
+declare(strict_types=1);
 
 $DependencyInjectionContainer = require __DIR__ . '/src/bootstrap.php';
 
-
 echo 'FIXME: Not implemented';
 exit(1);
+
+$craftsman = $DependencyInjectionContainer->get('craftsman');
+$craftsman->run($consileInput);
