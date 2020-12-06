@@ -48,3 +48,6 @@ new-shell:
 	@if ! docker-compose exec php echo '' 2> /dev/null; then \
 		$(MAKE) up; \
 	fi;
+
+phpcs phpcbf phpunit: .up
+	docker-compose exec ./vendonr/bin/$@
