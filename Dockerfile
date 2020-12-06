@@ -7,8 +7,16 @@ COPY config ./config
 COPY src ./src
 RUN composer dump-autoload --ignore-platform-reqs --no-dev --optimize --classmap-authoritative
 
-FROM php:8.0.0RC5-fpm-alpine
-COPY --from=source /usr/bin/composer /usr/bin
-COPY --from=source app/ .
-RUN composer check-platform-reqs
+FROM php:8.0-fpm-alpine3.12
 
+COPY --from=composer:2.0 /usr/bin/composer /usr/bin
+COPY composer.* ./
+ARG dev=0
+RUN \
+    composer check-platform-reqs && \
+    if [ "$dev" != "1" ]; then \
+        rm /usr/bin/composer; \
+    fi;
+
+
+COPY --from=source app/ .
