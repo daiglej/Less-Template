@@ -10,6 +10,7 @@ RUN set -e; \
     composer clear-cache --quiet --no-interaction;
 COPY lib /app/lib
 COPY src /app/src
+COPY craftsman /app/craftsman
 RUN set -e; \
     composer install --ignore-platform-reqs --no-cache ${no_dev} --prefer-dist --no-interaction --no-suggest --no-progress --quiet --optimize-autoloader --classmap-authoritative; \
     composer clear-cache --quiet --no-interaction;
@@ -22,7 +23,12 @@ ENV PATH="${PATH}:/app/vendor/bin"
 RUN set -e; \
     mkdir /app; \
     mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini; \
-    docker-php-ext-enable opcache; # Is this necessary?
+    apk add --no-cache --virtual .temp-deps $PHPIZE_DEPS; \
+    pecl install apcu; \
+    docker-php-ext-enable \
+        apcu \
+        opcache; \
+    apk del .temp-deps;
 
 WORKDIR /app
 
@@ -31,11 +37,11 @@ ARG dev=0
 RUN set -e; \
     if [ "$dev" == "1" ]; then \
         mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini; \
-        apk add --no-cache --virtual .dev-deps \
-            $PHPIZE_DEPS; \
-        pecl install xdebug oap-beta; \
+        apk add --no-cache --virtual .dev-temp-deps $PHPIZE_DEPS; \
+        pecl install \
+            xdebug; \
         docker-php-ext-enable xdebug; \
-        apk del .dev-deps; \
+        apk del .dev-temp-deps; \
         ln -s /app/vendor/bin/phpcs /usr/bin/phpcs; \
     else \
         rm /usr/local/etc/php/php.ini-development; \
@@ -55,5 +61,5 @@ RUN set -e; \
     rm composer.*;
 
 # Add source files
-COPY --from=source /app/ /app
+COPY --from=source /app/ /app/
 

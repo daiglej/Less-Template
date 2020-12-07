@@ -1,4 +1,4 @@
-.PHONY: help up down build .up shell new-shell phpcs phpcbf phpunit
+.PHONY: help up down build .up shell new-shell phpcs phpcbf phpunit vendor
 
 ##
 # help		- Displays available make "targets"(commands). Not to be confused with make --help.
@@ -9,7 +9,7 @@ help:
 ##
 # up		- Start the application, (Start all docker containers)
 ##
-up: .env vendor build
+up: .env php/vendor build
 	docker-compose up --detach --force-recreate --remove-orphans && \
 	docker-compose ps --all;
 
@@ -23,13 +23,13 @@ down:
 # build		- Build docker images.
 ##
 build: .env
-	docker-compose build --pull --no-rm --parallel; \
+	docker-compose build --pull --no-rm --parallel && \
 	docker-compose images;
 
 ##
 # vendor	- Creates/update the vendor library folder. (runs composer install)
 ##
-vendor: php/composer.json php/composer.lock
+vendor php/vendor: php/composer.json php/composer.lock
 	docker run -v $(PWD)/php:/app composer:2.0 install && \
 	touch php/vendor
 
@@ -49,7 +49,8 @@ new-shell:
 # .env		- Create/Replace the .env file. By copying the .env.template template file.
 ##
 .env: .env.template
-	@if [ ! -f .env ]; then \
+	@set -e; \
+	if [ ! -f .env ]; then \
 		cp .env.template .env; \
 	elif diff .env.template .env; then \
 		touch .env; \
@@ -71,15 +72,17 @@ new-shell:
 
 # Similar to up, but does nothing if containers are already running
 .up:
-	@if ! docker-compose exec php echo '' 2> /dev/null; then \
+	@set -e; \
+	if ! docker-compose exec php echo '' 2> /dev/null; then \
 		$(MAKE) up; \
 	fi;
 
 ##
+# psysh		- Open a PsySH REPL shell. See https://psysh.org
 # phpunit	- Runs "phpunit" inside the php image. (runs the unit test suite).
 # phpcs		- Runs "phpcs" inside the php image. (reports code styling violations, defined by phpcs.xml)
 # phpcbf	- Runs "phpcbf" inside the php image.
 #				("beautifies" the php source code, according to automatically fixable rules of phpcs.xml)
 ##
-phpcbf phpcs phpunit: .up
-	docker-compose run --rm --no-deps php $@
+phpcbf phpcs phpunit psysh: .up
+	@docker-compose run --rm --no-deps php $@
