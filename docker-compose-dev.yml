@@ -6,4 +6,5 @@ services:
       args:
         - dev=1
     volumes:
+      - ${COMPOSER_HOME}:/root/.composer
       - ./php:/app:cached
