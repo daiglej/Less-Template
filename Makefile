@@ -7,13 +7,13 @@
 help:
 	@printf "\nUsage: \"make [OPTIONS] [TARGET]\"\n\n"; \
 	printf "TARGETS:\n\n"; \
-	grep -e "^# " $(MAKEFILE_LIST) | cut -c2-; \
+	grep -e "^# " $(MAKEFILE_LIST) 2>/dev/null | cut -c2-; \
 	printf "\n";
 
 ##
 # up               - Start the application, (Start all docker containers)
 ##
-up: .env php/vendor build
+up: .valid-env build php/vendor
 	docker-compose up --detach --force-recreate --remove-orphans && \
 	docker-compose ps --all;
 
@@ -26,16 +26,15 @@ down:
 ##
 # build            - Build docker images.
 ##
-build: .env
+build: .valid-env
 	docker-compose build --pull --no-rm --parallel && \
 	docker-compose images;
 
 ##
 # composer-install - runs composer install (install / update composer package)
 ##
-composer-install php/vendor: php/composer.json php/composer.lock .env
-	@set -a && \
- 	. ./.env && \
+composer-install php/vendor: .valid-env php/composer.json php/composer.lock .volumes/composer
+	@mkdir -p .volumes/composer; \
 	docker run \
 		--rm \
 		--user $(id -u):$$(id -g) \
@@ -71,33 +70,30 @@ phpcbf phpcs phpunit psysh: .up
 	@docker-compose run --rm --no-deps php $@
 
 ##
-# .env             - Create/Replace the .env file. By copying the .env.template template file.
+# .env             - Create/Update the .env file.
 ##
 .env: .env.template
-	@set -e; \
-	mkdir -p .volumes/composer; \
-	if [ ! -f .env ]; then \
-		cp .env.template .env; \
-	elif diff .env.template .env; then \
-		touch .env; \
-		exit 0; \
-  	else \
-		echo "Some new changes where made to .env.template, since the last time you edited the .env file (see diff above)."; \
-		read -e -p "Do you want to replace tour .env, by .env.template?" choice; \
-		if [[ "$$choice" == [Yy]* ]]; then \
-			cp .env .env.back; \
-			cp -f .env.template .env; \
-			echo "Your old file was backup to .env.back"; \
-			exit 0; \
-		else \
-			echo "Please updadte the .env file and try again."; \
-			echo "Alternately you can \"touch .env\" to make this error go away."; \
-			exit 1; \
-		fi; \
+	@mkdir -p .volumes; \
+	if [ ! -f .env ]; then cp .env.template .env; fi; \
+	if [ ! -f .volumes/.env.template-previous ]; then  cp .env.template .volumes/.env.template-previous; fi; \
+	cp -f .env .volumes/.env.back; \
+	if /usr/bin/diff3 -m .env .volumes/.env.template-previous .env.template > .env; then \
+		cp -f .env.template .volumes/.env.template-previous;\
+	else \
+	  	cp -f .env.template .volumes/.env.template-previous;\
+	  	printf "\n\nPLEASE RESOLVE THE MERGE CONFLICT(S) IN THE .env FILE AND TRY AGAIN\n\n"; \
+	  	exit 1; \
 	fi;
 
+## Ensure there is no merge conflict in the .enn file
+.valid-env: .env
+	@if grep -e "^>>>>>>> .env" -e "^<<<<<<< .env" .env > /dev/null ; then \
+  		printf "\n\nPLEASE RESOLVE THE MERGE CONFLICT(S) IN THE .env FILE AND TRY AGAIN\n\n"; \
+		exit 1; \
+  	fi;
+
 ## Similar to up, but does nothing if containers are already running
-.up: .env php/vendor build
+.up: .valid-env build php/vendor
 	@set -e; \
 	if ! docker-compose exec php echo '' 2> /dev/null; then \
 		docker-compose build --pull --no-rm --parallel && \
